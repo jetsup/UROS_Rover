@@ -1,12 +1,25 @@
 #include "comm.hpp"
 
+// vehicle_data_t vehicle_data;
 rcl_publisher_t magPublisher;
 rcl_publisher_t gyroPublisher;
 rcl_publisher_t accelPublisher;
-// vehicle_data_t vehicle_data;
+rcl_publisher_t proximityPublisher;
+
 geometry_msgs__msg__Vector3 vehicle_mag_data;
 geometry_msgs__msg__Vector3 vehicle_gyro_data;
 geometry_msgs__msg__Vector3 vehicle_accel_data;
+geometry_msgs__msg__Vector3 vehicleProximity;
+
+rcl_subscription_t leftMotorControlSubscriber;
+rcl_subscription_t rightMotorControlSubscriber;
+rcl_subscription_t vehicleControlSubscriber; /* lights and hooting */
+
+geometry_msgs__msg__Vector3 leftMotorControlData;
+geometry_msgs__msg__Vector3 rightMotorControlData;
+geometry_msgs__msg__Vector3 vehicleControlData; /* lights and hooting */
+
+rclc_executor_t executor;
 rclc_support_t support;
 rcl_allocator_t allocator;
 rcl_node_t node;
@@ -37,4 +50,25 @@ void timer_callback(rcl_timer_t* timer, int64_t last_call_time) {
     vehicle_accel_data.y = random(-100, 100) / 100.0;
     vehicle_accel_data.z = random(-100, 100) / 100.0;
   }
+}
+
+void leftMotorSubscriptionCallback(const void* msg) {
+  const geometry_msgs__msg__Vector3* data =
+      (const geometry_msgs__msg__Vector3*)msg;
+  Serial.printf("Left Motor Control: x=%f, y=%f, z=%f\n", data->x, data->y,
+                data->z);
+}
+
+void rightMotorSubscriptionCallback(const void* msg) {
+  const geometry_msgs__msg__Vector3* data =
+      (const geometry_msgs__msg__Vector3*)msg;
+  Serial.printf("Right Motor Control: x=%f, y=%f, z=%f\n", data->x, data->y,
+                data->z);
+}
+
+void vehicleControlSubscriptionCallback(const void* msg) {
+  const geometry_msgs__msg__Vector3* data =
+      (const geometry_msgs__msg__Vector3*)msg;
+  Serial.printf("Vehicle Control: x=%f, y=%f, z=%f\n", data->x, data->y,
+                data->z);
 }

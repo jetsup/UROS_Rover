@@ -30,15 +30,28 @@
 #error This example is only available for Arduino Portenta, Arduino Nano RP2040 Connect, ESP32 Dev module and Wio Terminal
 #endif
 
-extern geometry_msgs__msg__Vector3 vehicle_mag_data;
-extern geometry_msgs__msg__Vector3 vehicle_gyro_data;
-extern geometry_msgs__msg__Vector3 vehicle_accel_data;
-
+// extern vehicle_data_t vehicle_data;
+// Publishers
 extern rcl_publisher_t magPublisher;
 extern rcl_publisher_t gyroPublisher;
 extern rcl_publisher_t accelPublisher;
+extern rcl_publisher_t proximityPublisher;
+// Publisher's data
+extern geometry_msgs__msg__Vector3 vehicle_mag_data;
+extern geometry_msgs__msg__Vector3 vehicle_gyro_data;
+extern geometry_msgs__msg__Vector3 vehicle_accel_data;
+extern geometry_msgs__msg__Vector3 vehicleProximity;
 
-// extern vehicle_data_t vehicle_data;
+// Subscribers
+extern rcl_subscription_t leftMotorControlSubscriber;
+extern rcl_subscription_t rightMotorControlSubscriber;
+extern rcl_subscription_t vehicleControlSubscriber; /* lights and hooting */
+// Subscription's buffer
+extern geometry_msgs__msg__Vector3 leftMotorControlData;
+extern geometry_msgs__msg__Vector3 rightMotorControlData;
+extern geometry_msgs__msg__Vector3 vehicleControlData; /* lights and hooting */
+
+extern rclc_executor_t executor;
 extern rclc_support_t support;
 extern rcl_allocator_t allocator;
 extern rcl_node_t node;
@@ -59,5 +72,9 @@ void timer_callback(rcl_timer_t *timer, int64_t last_call_time);
     if ((temp_rc != RCL_RET_OK)) { \
     }                              \
   }
+
+void leftMotorSubscriptionCallback(const void *msg);
+void rightMotorSubscriptionCallback(const void *msg);
+void vehicleControlSubscriptionCallback(const void *msg);
 
 #endif

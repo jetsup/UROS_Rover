@@ -35,7 +35,7 @@ void setup() {
   RCCHECK(rclc_node_init_default(&node, "microros_rover", "", &support));
   Serial.println("Node initialized");
 
-  // create magPublisher
+  // Create Publishers
   RCCHECK(rclc_publisher_init_best_effort(
       &magPublisher, &node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3),
@@ -48,12 +48,37 @@ void setup() {
       &accelPublisher, &node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3),
       "uros_accel_data"));
+  RCCHECK(rclc_publisher_init_best_effort(
+      &proximityPublisher, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3),
+      "uros_proximity_data"));
 
   Serial.println("Publishers initialized");
 
+  // Create Subscribers
+  RCCHECK(rclc_subscription_init_best_effort(
+      &leftMotorControlSubscriber, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3),
+      "uros_left_motor_control"));
+  RCCHECK(rclc_subscription_init_best_effort(
+      &rightMotorControlSubscriber, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3),
+      "uros_right_motor_control"));
+  RCCHECK(rclc_subscription_init_best_effort(
+      &vehicleControlSubscriber, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3),
+      "uros_vehicle_control"));
+
+  rclc_executor_init(&executor, &support.context, 3, &allocator);
+  rclc_executor_add_subscription(&executor, &leftMotorControlSubscriber, &leftMotorControlData, 
+                                 &leftMotorSubscriptionCallback, ALWAYS);
+  rclc_executor_add_subscription(&executor, &rightMotorControlSubscriber, &rightMotorControlData,
+                                 &rightMotorSubscriptionCallback, ALWAYS);
+  rclc_executor_add_subscription(&executor, &vehicleControlSubscriber, &vehicleControlData,
+                                 &vehicleControlSubscriptionCallback, ALWAYS);
   //   vehicle_data = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-  Serial.println("Publisher created successfully");
+  Serial.println("Subscribers initialized");
 
   //   vehicle =
   //       new Vehicle(UROS_L298N_ENA_PIN, UROS_L298N_IN1_PIN,
@@ -84,4 +109,6 @@ void loop() {
   vehicle_accel_data.z = random(-100, 100) / 100.0;
 
   delay(200);
+
+  rclc_executor_spin_some(&executor, RCL_MS_TO_NS(50));
 }
