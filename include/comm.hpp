@@ -12,6 +12,7 @@
  * communication-related functions.
  */
 
+#include <geometry_msgs/msg/vector3.h>
 #include <micro_ros_arduino.h>
 #include <rcl/error_handling.h>
 #include <rcl/rcl.h>
@@ -21,23 +22,23 @@
 #include <stdio.h>
 
 #include "config.h"
+// TODO: Work on custom message types
+// #include "uros_rover_message/msg/uros_rover_data.h"
 
 #if !defined(ESP32) && !defined(TARGET_PORTENTA_H7_M7) && \
     !defined(ARDUINO_NANO_RP2040_CONNECT) && !defined(ARDUINO_WIO_TERMINAL)
 #error This example is only available for Arduino Portenta, Arduino Nano RP2040 Connect, ESP32 Dev module and Wio Terminal
 #endif
 
-typedef struct {
-  float mag_x;
-  float mag_y;
-  float mag_z;
-  float gyro_x;
-  float gyro_y;
-  float gyro_z;
-} vehicle_data_t;
+extern geometry_msgs__msg__Vector3 vehicle_mag_data;
+extern geometry_msgs__msg__Vector3 vehicle_gyro_data;
+extern geometry_msgs__msg__Vector3 vehicle_accel_data;
 
-extern rcl_publisher_t publisher;
-extern vehicle_data_t vehicle_data;
+extern rcl_publisher_t magPublisher;
+extern rcl_publisher_t gyroPublisher;
+extern rcl_publisher_t accelPublisher;
+
+// extern vehicle_data_t vehicle_data;
 extern rclc_support_t support;
 extern rcl_allocator_t allocator;
 extern rcl_node_t node;

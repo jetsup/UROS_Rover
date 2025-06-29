@@ -32,39 +32,56 @@ void setup() {
   Serial.println("Support initialized");
 
   // create node
-  RCCHECK(rclc_node_init_default(&node, "micro_ros_arduino_wifi_node", "",
-                                 &support));
+  RCCHECK(rclc_node_init_default(&node, "microros_rover", "", &support));
   Serial.println("Node initialized");
 
-  // create publisher
+  // create magPublisher
   RCCHECK(rclc_publisher_init_best_effort(
-      &publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-      "uros_data"));
-  Serial.println("Publisher initialized");
+      &magPublisher, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3),
+      "uros_mag_data"));
+  RCCHECK(rclc_publisher_init_best_effort(
+      &gyroPublisher, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3),
+      "uros_gyro_data"));
+  RCCHECK(rclc_publisher_init_best_effort(
+      &accelPublisher, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3),
+      "uros_accel_data"));
 
-  vehicle_data = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  Serial.println("Publishers initialized");
+
+  //   vehicle_data = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
   Serial.println("Publisher created successfully");
 
-  vehicle =
-      new Vehicle(UROS_L298N_ENA_PIN, UROS_L298N_IN1_PIN, UROS_L298N_IN2_PIN,
-                  UROS_L298N_ENB_PIN, UROS_L298N_IN3_PIN, UROS_L298N_IN4_PIN,
-                  UROS_BUZZER_PIN);
-    Serial.println("Vehicle object created successfully");
+  //   vehicle =
+  //       new Vehicle(UROS_L298N_ENA_PIN, UROS_L298N_IN1_PIN,
+  //       UROS_L298N_IN2_PIN,
+  //                   UROS_L298N_ENB_PIN, UROS_L298N_IN3_PIN,
+  //                   UROS_L298N_IN4_PIN, UROS_BUZZER_PIN);
+  //   Serial.println("Vehicle object created successfully");
 
-    // Create task handles
-    xTaskCreate(comm_task, "comm_task", 2048, NULL, 1, &comm_task_handle);
-    xTaskCreate(vehicle_task, "vehicle_task", 2048, NULL, 1, &vehicle_task_handle);
+  // Create task handles
+  // xTaskCreatePinnedToCore(vehicle_task, "vehicle_task", 4096, nullptr, 1,
+  //                           nullptr, 0);
 }
 
 void loop() {
-//   RCSOFTCHECK(rcl_publish(&publisher, &vehicle_data, NULL));
+  RCSOFTCHECK(rcl_publish(&magPublisher, &vehicle_mag_data, NULL));
+  RCSOFTCHECK(rcl_publish(&gyroPublisher, &vehicle_gyro_data, NULL));
+  RCSOFTCHECK(rcl_publish(&accelPublisher, &vehicle_accel_data, NULL));
 
-//   // randomize vehicle data
-//   vehicle_data.mag_x = random(-100, 100) / 100.0;
-//   vehicle_data.mag_y = random(-100, 100) / 100.0;
-//   vehicle_data.mag_z = random(-100, 100) / 100.0;
-//   vehicle_data.gyro_x = random(-100, 100) / 100.0;
-//   vehicle_data.gyro_y = random(-100, 100) / 100.0;
-//   vehicle_data.gyro_z = random(-100, 100) / 100.0;
+  // randomize vehicle data
+  vehicle_mag_data.x = random(-100, 100) / 100.0;
+  vehicle_mag_data.y = random(-100, 100) / 100.0;
+  vehicle_mag_data.z = random(-100, 100) / 100.0;
+  vehicle_gyro_data.x = random(-100, 100) / 100.0;
+  vehicle_gyro_data.y = random(-100, 100) / 100.0;
+  vehicle_gyro_data.z = random(-100, 100) / 100.0;
+  vehicle_accel_data.x = random(-100, 100) / 100.0;
+  vehicle_accel_data.y = random(-100, 100) / 100.0;
+  vehicle_accel_data.z = random(-100, 100) / 100.0;
+
+  delay(200);
 }

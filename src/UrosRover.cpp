@@ -9,15 +9,18 @@ void comm_task(void* pvParameters) {
   (void)pvParameters;
 
   while (true) {
-    RCSOFTCHECK(rcl_publish(&publisher, &vehicle_data, NULL));
+    RCSOFTCHECK(rcl_publish(&magPublisher, &vehicle_mag_data, NULL));
 
     // randomize vehicle data
-    vehicle_data.mag_x = random(-100, 100) / 100.0;
-    vehicle_data.mag_y = random(-100, 100) / 100.0;
-    vehicle_data.mag_z = random(-100, 100) / 100.0;
-    vehicle_data.gyro_x = random(-100, 100) / 100.0;
-    vehicle_data.gyro_y = random(-100, 100) / 100.0;
-    vehicle_data.gyro_z = random(-100, 100) / 100.0;
+    vehicle_mag_data.x = random(-100, 100) / 100.0;
+    vehicle_mag_data.y = random(-100, 100) / 100.0;
+    vehicle_mag_data.z = random(-100, 100) / 100.0;
+    vehicle_gyro_data.x = random(-100, 100) / 100.0;
+    vehicle_gyro_data.y = random(-100, 100) / 100.0;
+    vehicle_gyro_data.z = random(-100, 100) / 100.0;
+    vehicle_accel_data.x = random(-100, 100) / 100.0;
+    vehicle_accel_data.y = random(-100, 100) / 100.0;
+    vehicle_accel_data.z = random(-100, 100) / 100.0;
 
     delay(50);
   }
@@ -30,6 +33,7 @@ void vehicle_task(void* pvParameters) {
     vehicle->measureProximity();
     vehicle->checkReverse();
     // vehicle.loop();
-    delay(100);
+    Serial.println("Vehicle task running");
+    delay(1000);
   }
 }
