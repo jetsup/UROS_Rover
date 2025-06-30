@@ -55,6 +55,7 @@ extern rclc_executor_t executor;
 extern rclc_support_t support;
 extern rcl_allocator_t allocator;
 extern rcl_node_t node;
+extern rcl_timer_t timer;
 
 void error_loop();
 void timer_callback(rcl_timer_t *timer, int64_t last_call_time);

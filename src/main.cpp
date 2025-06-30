@@ -55,6 +55,11 @@ void setup() {
 
   Serial.println("Publishers initialized");
 
+  // Initialize the timer
+  RCCHECK(rclc_timer_init_default(&timer, &support, RCL_MS_TO_NS(100),
+                                  timer_callback));
+  Serial.println("Timer initialized");
+
   // Create Subscribers
   RCCHECK(rclc_subscription_init_best_effort(
       &leftMotorControlSubscriber, &node,
@@ -69,13 +74,19 @@ void setup() {
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3),
       "uros_vehicle_control"));
 
-  rclc_executor_init(&executor, &support.context, 3, &allocator);
-  rclc_executor_add_subscription(&executor, &leftMotorControlSubscriber, &leftMotorControlData, 
-                                 &leftMotorSubscriptionCallback, ALWAYS);
-  rclc_executor_add_subscription(&executor, &rightMotorControlSubscriber, &rightMotorControlData,
-                                 &rightMotorSubscriptionCallback, ALWAYS);
-  rclc_executor_add_subscription(&executor, &vehicleControlSubscriber, &vehicleControlData,
-                                 &vehicleControlSubscriptionCallback, ALWAYS);
+  // Change the number of handles in the executor to match the number of
+  // subscriptions and timers used
+  rclc_executor_init(&executor, &support.context, 8, &allocator);
+  rclc_executor_add_subscription(&executor, &leftMotorControlSubscriber,
+                                 &leftMotorControlData,
+                                 &leftMotorSubscriptionCallback, ON_NEW_DATA);
+  rclc_executor_add_subscription(&executor, &rightMotorControlSubscriber,
+                                 &rightMotorControlData,
+                                 &rightMotorSubscriptionCallback, ON_NEW_DATA);
+  rclc_executor_add_subscription(
+      &executor, &vehicleControlSubscriber, &vehicleControlData,
+      &vehicleControlSubscriptionCallback, ON_NEW_DATA);
+  rclc_executor_add_timer(&executor, &timer);
   //   vehicle_data = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
   Serial.println("Subscribers initialized");
@@ -92,23 +103,4 @@ void setup() {
   //                           nullptr, 0);
 }
 
-void loop() {
-  RCSOFTCHECK(rcl_publish(&magPublisher, &vehicle_mag_data, NULL));
-  RCSOFTCHECK(rcl_publish(&gyroPublisher, &vehicle_gyro_data, NULL));
-  RCSOFTCHECK(rcl_publish(&accelPublisher, &vehicle_accel_data, NULL));
-
-  // randomize vehicle data
-  vehicle_mag_data.x = random(-100, 100) / 100.0;
-  vehicle_mag_data.y = random(-100, 100) / 100.0;
-  vehicle_mag_data.z = random(-100, 100) / 100.0;
-  vehicle_gyro_data.x = random(-100, 100) / 100.0;
-  vehicle_gyro_data.y = random(-100, 100) / 100.0;
-  vehicle_gyro_data.z = random(-100, 100) / 100.0;
-  vehicle_accel_data.x = random(-100, 100) / 100.0;
-  vehicle_accel_data.y = random(-100, 100) / 100.0;
-  vehicle_accel_data.z = random(-100, 100) / 100.0;
-
-  delay(200);
-
-  rclc_executor_spin_some(&executor, RCL_MS_TO_NS(50));
-}
+void loop() { rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100)); }

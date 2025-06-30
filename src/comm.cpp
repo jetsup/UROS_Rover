@@ -23,6 +23,7 @@ rclc_executor_t executor;
 rclc_support_t support;
 rcl_allocator_t allocator;
 rcl_node_t node;
+rcl_timer_t timer;
 
 void error_loop() {
   while (1) {
