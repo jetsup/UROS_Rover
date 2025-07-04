@@ -20,6 +20,18 @@ Before you proceed with the setup, make sure you go through the [Custom Messages
 
 2. Install the [micro-ROS Agent](https://micro.ros.org/docs/tutorials/core/first_application_linux/) on your computer.
 
+3. Make sure your firewall allows for port 8888, which is used by the micro-ROS Agent for communication. You can check this by running:
+
+   ```bash
+   sudo ufw status
+   ```
+
+   If the port is not allowed, you can allow it with the following command:
+
+   ```bash
+   sudo ufw allow 8888/udp
+   ```
+
 3. Run the micro-ROS Agent on your computer with the following command:
 
    ```bash
