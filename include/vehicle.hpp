@@ -71,6 +71,11 @@ class Vehicle {
           int in4Pin, int hornPin = UROS_BUZZER_PIN);
 
   /**
+   * @brief Main loop for the vehicle control.
+   */
+  void loop();
+
+  /**
    * @brief Drive the vehicle by setting the speed of the left and right motors.
    * This function sets the speed of the left and right motors based on the
    * provided speed values. The speed values should be in the range of 0 to 255,

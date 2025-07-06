@@ -56,20 +56,26 @@ void timer_callback(rcl_timer_t* timer, int64_t last_call_time) {
 void leftMotorSubscriptionCallback(const void* msg) {
   const geometry_msgs__msg__Vector3* data =
       (const geometry_msgs__msg__Vector3*)msg;
-  Serial.printf("Left Motor Control: x=%f, y=%f, z=%f\n", data->x, data->y,
-                data->z);
+
+      leftMotorReceivedControl[0] = data->x;
+      leftMotorReceivedControl[1] = data->y;
+      leftMotorReceivedControl[2] = data->z;
 }
 
 void rightMotorSubscriptionCallback(const void* msg) {
   const geometry_msgs__msg__Vector3* data =
       (const geometry_msgs__msg__Vector3*)msg;
-  Serial.printf("Right Motor Control: x=%f, y=%f, z=%f\n", data->x, data->y,
-                data->z);
+
+  rightMotorReceivedControl[0] = data->x;
+  rightMotorReceivedControl[1] = data->y;
+  rightMotorReceivedControl[2] = data->z;
 }
 
 void vehicleControlSubscriptionCallback(const void* msg) {
   const geometry_msgs__msg__Vector3* data =
       (const geometry_msgs__msg__Vector3*)msg;
-  Serial.printf("Vehicle Control: x=%f, y=%f, z=%f\n", data->x, data->y,
-                data->z);
+
+  vehicleControlReceived[0] = data->x;
+  vehicleControlReceived[1] = data->y;
+  vehicleControlReceived[2] = data->z;
 }

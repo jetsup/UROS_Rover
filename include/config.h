@@ -41,6 +41,11 @@
 
 // Proximity sensor settings
 #define UROS_FRONT_PROXIMITY_MAX_DISTANCE_CM 400
-#define UROS_PROXIMITY_MEASURE_INTERVAL_MS 10  
+#define UROS_PROXIMITY_MEASURE_INTERVAL_MS 10
+
+// GLOBAL VARIABLES
+extern int leftMotorReceivedControl[3];
+extern int rightMotorReceivedControl[3];
+extern int vehicleControlReceived[3];
 
 #endif

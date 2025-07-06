@@ -32,17 +32,25 @@ Before you proceed with the setup, make sure you go through the [Custom Messages
    sudo ufw allow 8888/udp
    ```
 
-3. Run the micro-ROS Agent on your computer with the following command:
+4. Run the micro-ROS Agent on your computer with the following command:
 
    ```bash
    ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
    ```
 
-4. Open the [ROS2 CLI](https://docs.ros.org/en/jazzy/Command-Line-Interface.html) and run the following command to check if the rover is connected:
+5. Open the [ROS2 CLI](https://docs.ros.org/en/jazzy/Command-Line-Interface.html) and run the following command to check if the rover is connected:
 
    ```bash
    ros2 topic list
    ```
+
+6. If everything runs, your `rqt_graph` should look like this:
+
+   ![rqt_graph](resources/rqt_communication.png)
+
+   The `rover_controller` node is found in the [uros_rover_controller](https://github.com/jetsup/uros_rover_controller.git) repository.
+
+### Troubleshooting
 
    If you do not see your topic, check and make sure that the port is not being blocked by a firewall or other software. You can allow the port in your terminal with the following command:
 

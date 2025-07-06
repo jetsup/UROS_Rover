@@ -21,6 +21,21 @@ Vehicle::Vehicle(int enaPin, int in1Pin, int in2Pin, int enbPin, int in3Pin,
                   UROS_FRONT_PROXIMITY_MAX_DISTANCE_CM);
 }
 
+void Vehicle::loop() {
+  Serial.printf(
+      "Left: x=%d, y=%d, z=%d\tRight: x=%d, y=%d, z=%d\tControl: x=%d, y=%d, "
+      "z=%d\n",
+      leftMotorReceivedControl[0], leftMotorReceivedControl[1],
+      leftMotorReceivedControl[2], rightMotorReceivedControl[0],
+      rightMotorReceivedControl[1], rightMotorReceivedControl[2],
+      vehicleControlReceived[0], vehicleControlReceived[1],
+      vehicleControlReceived[2]);
+  delay(50);
+
+  drive(leftMotorReceivedControl[0], rightMotorReceivedControl[0]);
+  hoot(vehicleControlReceived[2]);
+}
+
 void Vehicle::drive(int leftSpeed, int rightSpeed) {
   _leftSpeed = leftSpeed;
   _rightSpeed = rightSpeed;

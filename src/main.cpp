@@ -28,11 +28,20 @@ void setup() {
   Serial.println("Using default allocator");
 
   // create init_options
-  RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
-  Serial.println("Support initialized");
+  rcl_init_options_t urosOptions = rcl_get_zero_initialized_init_options();
+  rcl_init_options_init(&urosOptions, allocator);
+  rcl_init_options_set_domain_id(&urosOptions, UROS_ROS_DOMAIN_ID);
 
+  Serial.println("Init options created");
+
+  //   RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
+  //   Serial.println("Support initialized");
+  // Initialize the support structure
+  RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &urosOptions,
+                                         &allocator));
   // create node
-  RCCHECK(rclc_node_init_default(&node, "microros_rover", "", &support));
+  RCCHECK(rclc_node_init_default(&node, "uros_rover", "", &support));
+
   Serial.println("Node initialized");
 
   // Create Publishers
@@ -91,16 +100,15 @@ void setup() {
 
   Serial.println("Subscribers initialized");
 
-  //   vehicle =
-  //       new Vehicle(UROS_L298N_ENA_PIN, UROS_L298N_IN1_PIN,
-  //       UROS_L298N_IN2_PIN,
-  //                   UROS_L298N_ENB_PIN, UROS_L298N_IN3_PIN,
-  //                   UROS_L298N_IN4_PIN, UROS_BUZZER_PIN);
-  //   Serial.println("Vehicle object created successfully");
+  vehicle =
+      new Vehicle(UROS_L298N_ENA_PIN, UROS_L298N_IN1_PIN, UROS_L298N_IN2_PIN,
+                  UROS_L298N_ENB_PIN, UROS_L298N_IN3_PIN, UROS_L298N_IN4_PIN,
+                  UROS_BUZZER_PIN);
+  Serial.println("Vehicle object created successfully");
 
   // Create task handles
-  // xTaskCreatePinnedToCore(vehicle_task, "vehicle_task", 4096, nullptr, 1,
-  //                           nullptr, 0);
+  xTaskCreatePinnedToCore(vehicle_task, "vehicle_task", 4096, nullptr, 1,
+                            nullptr, 1);
 }
 
 void loop() { rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100)); }

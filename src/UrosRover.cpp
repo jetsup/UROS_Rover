@@ -32,8 +32,6 @@ void vehicle_task(void* pvParameters) {
   while (true) {
     vehicle->measureProximity();
     vehicle->checkReverse();
-    // vehicle.loop();
-    Serial.println("Vehicle task running");
-    delay(1000);
+    vehicle->loop();
   }
 }
