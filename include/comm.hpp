@@ -35,11 +35,13 @@
 extern rcl_publisher_t magPublisher;
 extern rcl_publisher_t gyroPublisher;
 extern rcl_publisher_t accelPublisher;
+extern rcl_publisher_t orientationPublisher;
 extern rcl_publisher_t proximityPublisher;
 // Publisher's data
 extern geometry_msgs__msg__Vector3 vehicle_mag_data;
 extern geometry_msgs__msg__Vector3 vehicle_gyro_data;
 extern geometry_msgs__msg__Vector3 vehicle_accel_data;
+extern geometry_msgs__msg__Vector3 vehicle_orientation_data;
 extern geometry_msgs__msg__Vector3 vehicleProximity;
 
 // Subscribers

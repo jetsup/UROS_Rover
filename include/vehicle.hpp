@@ -12,8 +12,10 @@
  */
 
 #include <Arduino.h>
+#include <MPU6500_WE.h>
 #include <NewPing.h>
 
+#include "comm.hpp"
 #include "config.h"
 
 class Vehicle {
@@ -49,7 +51,7 @@ class Vehicle {
   uint8_t _rightSpeed = 0;
 
   // Class objects
-  NewPing *_frontProximitySensor;
+  NewPing* _frontProximitySensor;
 
  public:
   Vehicle() = delete;
@@ -122,4 +124,16 @@ class Vehicle {
    * @brief Read the proximity sensor values in cm
    */
   void measureProximity();
+};
+
+class VehicleSensors {
+ private:
+  MPU6500_WE* _mpu6500;
+  NewPing* _frontProximity;
+
+ public:
+  VehicleSensors(uint8_t mpu6500Address = UROS_MPU6500_ADDRESS);
+  ~VehicleSensors();
+
+  void loop();
 };

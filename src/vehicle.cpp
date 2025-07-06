@@ -135,3 +135,56 @@ void Vehicle::measureProximity() {
     _previousProximityReadTime = millis();
   }
 }
+
+// ========================= Vehicle Sensors =========================
+VehicleSensors::VehicleSensors(uint8_t mpu6500Address) {
+  // ******************** MPU6500 ********************
+//   _mpu6500 = new MPU6500_WE(mpu6500Address);
+
+//   delay(1000);
+//   if (!_mpu6500->init()) {
+//     Serial.println("MPU6500 initialization failed!");
+//     while (true);
+//   } else {
+//     Serial.println("MPU6500 initialized successfully.");
+//   }
+
+//   Serial.println("Position you MPU6500 flat and don't move it\ncalibrating...");
+//   delay(1000);
+
+//   _mpu6500->autoOffsets();
+//   Serial.println("Calibration complete!");
+//   _mpu6500->enableGyrDLPF();
+//   _mpu6500->setGyrDLPF(MPU6500_DLPF_6);
+//   _mpu6500->setSampleRateDivider(5);
+//   _mpu6500->setAccRange(MPU6500_ACC_RANGE_2G);
+//   _mpu6500->setGyrRange(MPU6500_GYRO_RANGE_250);
+//   _mpu6500->enableAccDLPF(true);
+//   _mpu6500->setAccDLPF(MPU6500_DLPF_6);
+
+  // ========================= Proximity Sensors =========================
+  _frontProximity = new NewPing(UROS_FRONT_PROXIMITY_TRIGGER_PIN,
+                                UROS_FRONT_PROXIMITY_ECHO_PIN,
+                                UROS_PROXIMITY_MAX_DISTANCE_CM);
+}
+
+VehicleSensors::~VehicleSensors() { delete _mpu6500; }
+
+void VehicleSensors::loop() {
+  //   xyzFloat gValue = _mpu6500->getGValues();
+  //   xyzFloat gyr = _mpu6500->getGyrValues();
+  //   float temp = _mpu6500->getTemperature();
+  //   float resultantG = _mpu6500->getResultantG(gValue);
+
+  //   vehicle_accel_data.x = gValue.x;
+  //   vehicle_accel_data.y = gValue.y;
+  //   vehicle_accel_data.z = gValue.z;
+
+  //   vehicle_gyro_data.x = gyr.x;
+  //   vehicle_gyro_data.y = gyr.y;
+  //   vehicle_gyro_data.z = gyr.z;
+
+  //   vehicle_orientation_data.x = resultantG;
+
+  vehicleProximity.x = _frontProximity->ping_cm();
+}

@@ -4,6 +4,7 @@ TaskHandle_t comm_task_handle;
 TaskHandle_t vehicle_task_handle;
 
 Vehicle* vehicle;
+VehicleSensors *vehicleSensors;
 
 void comm_task(void* pvParameters) {
   (void)pvParameters;
@@ -33,5 +34,7 @@ void vehicle_task(void* pvParameters) {
     vehicle->measureProximity();
     vehicle->checkReverse();
     vehicle->loop();
+
+    vehicleSensors->loop();
   }
 }

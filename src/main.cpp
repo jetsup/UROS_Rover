@@ -1,8 +1,13 @@
 #include "main.hpp"
 
 void setup() {
+  delay(1000);
+
   Serial.begin(115200);
-  delay(2000);
+  if (!Wire.begin(UROS_I2C_SDA_PIN, UROS_I2C_SCL_PIN)) {
+    Serial.println("Could not initialize the I2C bus!");
+    while (true);
+  }
   Serial.println("Starting micro-ROS on WiFi...");
 
   set_microros_wifi_transports(UROS_WIFI_SSID, UROS_WIFI_PASSWORD,
@@ -58,6 +63,10 @@ void setup() {
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3),
       "uros_accel_data"));
   RCCHECK(rclc_publisher_init_best_effort(
+      &orientationPublisher, &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3),
+      "uros_orientation_data"));
+  RCCHECK(rclc_publisher_init_best_effort(
       &proximityPublisher, &node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Vector3),
       "uros_proximity_data"));
@@ -104,11 +113,12 @@ void setup() {
       new Vehicle(UROS_L298N_ENA_PIN, UROS_L298N_IN1_PIN, UROS_L298N_IN2_PIN,
                   UROS_L298N_ENB_PIN, UROS_L298N_IN3_PIN, UROS_L298N_IN4_PIN,
                   UROS_BUZZER_PIN);
-  Serial.println("Vehicle object created successfully");
+  vehicleSensors = new VehicleSensors(UROS_MPU6500_ADDRESS);
+  Serial.println("Vehicle object and sensors created successfully");
 
   // Create task handles
   xTaskCreatePinnedToCore(vehicle_task, "vehicle_task", 4096, nullptr, 1,
-                            nullptr, 1);
+                          nullptr, 1);
 }
 
 void loop() { rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100)); }
