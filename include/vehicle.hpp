@@ -12,7 +12,7 @@
  */
 
 #include <Arduino.h>
-#include <MPU6500_WE.h>
+#include <MPU9250_WE.h>
 #include <NewPing.h>
 
 #include "comm.hpp"
@@ -128,11 +128,11 @@ class Vehicle {
 
 class VehicleSensors {
  private:
-  MPU6500_WE* _mpu6500;
+  MPU9250_WE* _mpu9250;
   NewPing* _frontProximity;
 
  public:
-  VehicleSensors(uint8_t mpu6500Address = UROS_MPU6500_ADDRESS);
+  VehicleSensors(uint8_t mpu9250Address = UROS_MPU9250_ADDRESS);
   ~VehicleSensors();
 
   void loop();

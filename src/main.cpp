@@ -1,13 +1,13 @@
 #include "main.hpp"
 
 void setup() {
-  delay(1000);
-
   Serial.begin(115200);
+
   if (!Wire.begin(UROS_I2C_SDA_PIN, UROS_I2C_SCL_PIN)) {
     Serial.println("Could not initialize the I2C bus!");
     while (true);
   }
+
   Serial.println("Starting micro-ROS on WiFi...");
 
   set_microros_wifi_transports(UROS_WIFI_SSID, UROS_WIFI_PASSWORD,
@@ -34,8 +34,8 @@ void setup() {
 
   // create init_options
   rcl_init_options_t urosOptions = rcl_get_zero_initialized_init_options();
-  rcl_init_options_init(&urosOptions, allocator);
-  rcl_init_options_set_domain_id(&urosOptions, UROS_ROS_DOMAIN_ID);
+  RCCHECK(rcl_init_options_init(&urosOptions, allocator));
+  RCCHECK(rcl_init_options_set_domain_id(&urosOptions, UROS_ROS_DOMAIN_ID));
 
   Serial.println("Init options created");
 
@@ -113,7 +113,7 @@ void setup() {
       new Vehicle(UROS_L298N_ENA_PIN, UROS_L298N_IN1_PIN, UROS_L298N_IN2_PIN,
                   UROS_L298N_ENB_PIN, UROS_L298N_IN3_PIN, UROS_L298N_IN4_PIN,
                   UROS_BUZZER_PIN);
-  vehicleSensors = new VehicleSensors(UROS_MPU6500_ADDRESS);
+  vehicleSensors = new VehicleSensors(UROS_MPU9250_ADDRESS);
   Serial.println("Vehicle object and sensors created successfully");
 
   // Create task handles
