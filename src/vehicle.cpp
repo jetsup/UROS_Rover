@@ -39,11 +39,37 @@ void Vehicle::drive(int leftSpeed, int rightSpeed) {
   _leftSpeed = leftSpeed;
   _rightSpeed = rightSpeed;
 
+  // Turning when the vehicle is stopped
+  if (_leftSpeed == 0 && _rightSpeed != 0) {
+    _leftSpeed = _rightSpeed;
+    _rightSpeed = 0;
+
+    if (_leftSpeed < 0 && leftMotorReceivedControl[1] >= 0) {
+      _leftSpeed = -_leftSpeed;
+    }
+  } else if (_rightSpeed == 0 && _leftSpeed != 0) {
+    _rightSpeed = _leftSpeed;
+    _leftSpeed = 0;
+
+    if (_rightSpeed < 0 && rightMotorReceivedControl[1] >= 0) {
+      _rightSpeed = -_rightSpeed;
+    }
+  }
+
+  //   Serial.printf(
+  //       "Left: x=%d, y=%d, z=%d\tRight: x=%d, y=%d, z=%d\t\tLeft: %d\tRight:
+  //       "
+  //       "%d\n",
+  //       leftMotorReceivedControl[0], leftMotorReceivedControl[1],
+  //       leftMotorReceivedControl[2], rightMotorReceivedControl[0],
+  //       rightMotorReceivedControl[1], rightMotorReceivedControl[2],
+  //       _leftSpeed, _rightSpeed);
+
   // Set left motor direction and speed
-  if (_leftSpeed > UROS_MOTOR_SPEED_MIN) {
+  if (_leftSpeed > (int)UROS_MOTOR_SPEED_MIN) {
     digitalWrite(_in1Pin, HIGH);
     digitalWrite(_in2Pin, LOW);
-  } else if (_leftSpeed < 0 && -_leftSpeed > UROS_MOTOR_SPEED_MIN) {
+  } else if (_leftSpeed < 0 && fabs(_leftSpeed) > (int)UROS_MOTOR_SPEED_MIN) {
     digitalWrite(_in1Pin, LOW);
     digitalWrite(_in2Pin, HIGH);
     _leftSpeed = -_leftSpeed;
@@ -54,10 +80,10 @@ void Vehicle::drive(int leftSpeed, int rightSpeed) {
   }
 
   // Set right motor direction and speed
-  if (_rightSpeed > UROS_MOTOR_SPEED_MIN) {
+  if (_rightSpeed > (int)UROS_MOTOR_SPEED_MIN) {
     digitalWrite(_in3Pin, HIGH);
     digitalWrite(_in4Pin, LOW);
-  } else if (_rightSpeed < 0 && -_rightSpeed > UROS_MOTOR_SPEED_MIN) {
+  } else if (_rightSpeed < 0 && fabs(_rightSpeed) > (int)UROS_MOTOR_SPEED_MIN) {
     digitalWrite(_in3Pin, LOW);
     digitalWrite(_in4Pin, HIGH);
     _rightSpeed = -_rightSpeed;

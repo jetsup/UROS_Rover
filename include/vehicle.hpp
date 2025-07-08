@@ -14,6 +14,7 @@
 #include <Arduino.h>
 #include <MPU9250_WE.h>
 #include <NewPing.h>
+#include <math.h>
 
 #include "comm.hpp"
 #include "config.h"
@@ -47,8 +48,8 @@ class Vehicle {
   unsigned long _previousProximityReadTime = 0;
 
   // Speed variables
-  uint8_t _leftSpeed = 0;
-  uint8_t _rightSpeed = 0;
+  short _leftSpeed = 0;
+  short _rightSpeed = 0;
 
   // Class objects
   NewPing* _frontProximitySensor;
