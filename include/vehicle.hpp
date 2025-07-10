@@ -111,6 +111,13 @@ class Vehicle {
   void checkReverse();
 
   /**
+   * @brief Set the reversing state of the vehicle.
+   * @param isReversing If true, the vehicle is set to reversing mode;
+   * otherwise, it is set to normal driving mode.
+   */
+  void setReversing(bool isReversing);
+
+  /**
    * @brief Toggle the lights of the vehicle.
    * @param lightPin The pin number for the light to be toggled.
    * @param on If true, the lights will be turned on; if false, they

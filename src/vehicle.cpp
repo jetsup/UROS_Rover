@@ -9,6 +9,11 @@ Vehicle::Vehicle(int enaPin, int in1Pin, int in2Pin, int enbPin, int in3Pin,
       _enBPin(enbPin),
       _in3Pin(in3Pin),
       _in4Pin(in4Pin) {
+  pinMode(_hornPin, OUTPUT);
+  pinMode(_headLightPin, OUTPUT);
+  pinMode(_tailLightPin, OUTPUT);
+  pinMode(_reverseLightPin, OUTPUT);
+
   pinMode(_enAPin, OUTPUT);
   pinMode(_in1Pin, OUTPUT);
   pinMode(_in2Pin, OUTPUT);
@@ -33,6 +38,7 @@ void Vehicle::loop() {
 
   drive(leftMotorReceivedControl[0], rightMotorReceivedControl[0]);
   hoot(vehicleControlReceived[2]);
+  setReversing(leftMotorReceivedControl[1] < 0);
 }
 
 void Vehicle::drive(int leftSpeed, int rightSpeed) {
@@ -111,13 +117,9 @@ void Vehicle::stop() {
 }
 
 void Vehicle::hoot(bool hoot) {
-  if (_isHooting == hoot) {
-    return;
-  }
-
   _isHooting = hoot;
 
-  if (!_isHooting) {
+  if (_isHooting && !_isReversing) {
     _isHornHigh = true;
     digitalWrite(_hornPin, HIGH);
   } else {
@@ -132,16 +134,20 @@ void Vehicle::checkReverse() {
   if (_isReversing) {
     _reverseLightOn = true;
 
-    if (!_isHornHigh && millis() - _reverseStartTime > 500) {
+    if (!_isHornHigh && millis() - _reverseStartTime > UROS_ROVER_REVERSING_SOUND_HIGH) {
       _isHornHigh = true;
       digitalWrite(_hornPin, HIGH);
-    } else if (_isHornHigh && millis() - _reverseStartTime > 300 &&
-               !_isHooting) {
+      _reverseStartTime = millis();
+    } else if (_isHornHigh && millis() - _reverseStartTime > UROS_ROVER_REVERSING_SOUND_LOW) {
+      _isHornHigh = false;
+      digitalWrite(_hornPin, LOW);
+      _reverseStartTime = millis();
+    }
+  } else {
+    if (!_isHooting) {
       _isHornHigh = false;
       digitalWrite(_hornPin, LOW);
     }
-  } else {
-    digitalWrite(_hornPin, LOW);
 
     _reverseLightOn = false;
   }
@@ -149,7 +155,12 @@ void Vehicle::checkReverse() {
   toggleLights(_reverseLightPin, _reverseLightOn ? HIGH : LOW);
 }
 
+void Vehicle::setReversing(bool isReversing) {
+  _isReversing = isReversing;
+}
+
 void Vehicle::toggleLights(uint8_t lightPin, bool on) {
+  Serial.printf("LED: %d State: %d\n", lightPin, on);
   digitalWrite(lightPin, on ? HIGH : LOW);
 }
 
@@ -163,7 +174,8 @@ void Vehicle::measureProximity() {
 
 // ========================= Vehicle Sensors =========================
 VehicleSensors::VehicleSensors(uint8_t mpu9250Address) {
-  // ******************** MPU9250 ********************
+// ******************** MPU9250 ********************
+#if UROS_ROVER_IMU_PRESENT
   _mpu9250 = new MPU9250_WE(mpu9250Address);
 
   if (!_mpu9250->init()) {
@@ -185,6 +197,7 @@ VehicleSensors::VehicleSensors(uint8_t mpu9250Address) {
   _mpu9250->setGyrRange(MPU9250_GYRO_RANGE_250);
   _mpu9250->enableAccDLPF(true);
   _mpu9250->setAccDLPF(MPU9250_DLPF_6);
+#endif  // UROS_ROVER_IMU_PRESENT
 
   // ========================= Proximity Sensors =========================
   _frontProximity = new NewPing(UROS_FRONT_PROXIMITY_TRIGGER_PIN,
@@ -195,6 +208,7 @@ VehicleSensors::VehicleSensors(uint8_t mpu9250Address) {
 VehicleSensors::~VehicleSensors() { delete _mpu9250; }
 
 void VehicleSensors::loop() {
+#if UROS_ROVER_IMU_PRESENT
   xyzFloat gValue = _mpu9250->getGValues();
   xyzFloat gyr = _mpu9250->getGyrValues();
   float temp = _mpu9250->getTemperature();
@@ -209,6 +223,7 @@ void VehicleSensors::loop() {
   vehicle_gyro_data.z = gyr.z;
 
   vehicle_orientation_data.x = resultantG;
+#endif  // UROS_ROVER_IMU_PRESENT
 
   vehicleProximity.x = _frontProximity->ping_cm();
 }
