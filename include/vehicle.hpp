@@ -129,6 +129,16 @@ class Vehicle {
   void toggleLights(uint8_t lightPin, bool on);
 
   /**
+   * @brief Set the light status of the vehicle.
+   * @param headLightOn If true, the headlight will be turned on; otherwise,
+   * it will be turned off.
+   * @param tailLightOn If true, the tail light will be turned on; otherwise,
+   * it will be turned off.
+   * @note This function controls the headlight and tail light of the vehicle.
+   */
+  void setLightStatus(bool headLightOn, bool tailLightOn);
+
+  /**
    * @brief Read the proximity sensor values in cm
    */
   void measureProximity();

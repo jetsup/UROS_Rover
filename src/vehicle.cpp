@@ -39,6 +39,28 @@ void Vehicle::loop() {
   drive(leftMotorReceivedControl[0], rightMotorReceivedControl[0]);
   hoot(vehicleControlReceived[2]);
   setReversing(leftMotorReceivedControl[1] < 0);
+  setLightStatus(vehicleControlReceived[0], vehicleControlReceived[1]);
+
+  if (_headLightOn) {
+    digitalWrite(_headLightPin, HIGH);
+  } else {
+    digitalWrite(_headLightPin, LOW);
+  }
+
+  if (_tailLightOn) {
+    if ((leftMotorReceivedControl[0] < -UROS_MOTOR_SPEED_MIN ||
+         leftMotorReceivedControl[0] > UROS_MOTOR_SPEED_MIN ||
+         rightMotorReceivedControl[0] < -UROS_MOTOR_SPEED_MIN ||
+         rightMotorReceivedControl[0] > UROS_MOTOR_SPEED_MIN) &&
+        (leftMotorReceivedControl[1] != 0 ||
+         rightMotorReceivedControl[1] != 0)) {
+      analogWrite(_tailLightPin, 50);
+    } else {
+      analogWrite(_tailLightPin, 255);
+    }
+  } else {
+    analogWrite(_tailLightPin, 0);
+  }
 }
 
 void Vehicle::drive(int leftSpeed, int rightSpeed) {
@@ -113,7 +135,8 @@ void Vehicle::stop() {
   analogWrite(_enAPin, 0);
   analogWrite(_enBPin, 0);
 
-  digitalWrite(_tailLightPin, _tailLightOn ? HIGH : LOW);
+  analogWrite(_tailLightPin, 255);
+  _tailLightOn = true;
 }
 
 void Vehicle::hoot(bool hoot) {
@@ -134,11 +157,13 @@ void Vehicle::checkReverse() {
   if (_isReversing) {
     _reverseLightOn = true;
 
-    if (!_isHornHigh && millis() - _reverseStartTime > UROS_ROVER_REVERSING_SOUND_HIGH) {
+    if (!_isHornHigh &&
+        millis() - _reverseStartTime > UROS_ROVER_REVERSING_SOUND_HIGH) {
       _isHornHigh = true;
       digitalWrite(_hornPin, HIGH);
       _reverseStartTime = millis();
-    } else if (_isHornHigh && millis() - _reverseStartTime > UROS_ROVER_REVERSING_SOUND_LOW) {
+    } else if (_isHornHigh &&
+               millis() - _reverseStartTime > UROS_ROVER_REVERSING_SOUND_LOW) {
       _isHornHigh = false;
       digitalWrite(_hornPin, LOW);
       _reverseStartTime = millis();
@@ -155,13 +180,16 @@ void Vehicle::checkReverse() {
   toggleLights(_reverseLightPin, _reverseLightOn ? HIGH : LOW);
 }
 
-void Vehicle::setReversing(bool isReversing) {
-  _isReversing = isReversing;
-}
+void Vehicle::setReversing(bool isReversing) { _isReversing = isReversing; }
 
 void Vehicle::toggleLights(uint8_t lightPin, bool on) {
   Serial.printf("LED: %d State: %d\n", lightPin, on);
   digitalWrite(lightPin, on ? HIGH : LOW);
+}
+
+void Vehicle::setLightStatus(bool headLightOn, bool tailLightOn) {
+  _headLightOn = headLightOn;
+  _tailLightOn = tailLightOn;
 }
 
 void Vehicle::measureProximity() {
