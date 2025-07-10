@@ -11,6 +11,7 @@
  * motors.
  */
 
+#include <Adafruit_NeoPixel.h>
 #include <Arduino.h>
 #include <MPU9250_WE.h>
 #include <NewPing.h>
@@ -18,6 +19,12 @@
 
 #include "comm.hpp"
 #include "config.h"
+
+typedef enum {
+  E_UROS_TURNING_LEFT = -1,
+  E_UROS_TURNING_NONE,
+  E_UROS_TURNING_RIGHT,
+} TurningDirection;
 
 class Vehicle {
  private:
@@ -46,6 +53,11 @@ class Vehicle {
   bool _reverseLightOn = false;
   float _frontProximity = 0.0f;
   unsigned long _previousProximityReadTime = 0;
+  // When this variable is set, even if the vehicle is not turning, it will
+  // display some animation
+  bool _indicatorPatterns = false;
+  uint8_t _indicatorAnimIndex = 0;
+  unsigned long _lastIndicatorUpdate = 0;
 
   // Speed variables
   short _leftSpeed = 0;
@@ -53,6 +65,7 @@ class Vehicle {
 
   // Class objects
   NewPing* _frontProximitySensor;
+  Adafruit_NeoPixel* _indicatorStrip;
 
  public:
   Vehicle() = delete;
@@ -137,6 +150,14 @@ class Vehicle {
    * @note This function controls the headlight and tail light of the vehicle.
    */
   void setLightStatus(bool headLightOn, bool tailLightOn);
+
+  /**
+   * @brief Show the turn indicator lights based on the vehicle's turning
+   * direction.
+   * @param direction The turning direction to display (left, right, or none).
+   */
+  void showIndicator(
+      TurningDirection direction = TurningDirection::E_UROS_TURNING_NONE);
 
   /**
    * @brief Read the proximity sensor values in cm

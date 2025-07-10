@@ -56,6 +56,9 @@
 #define UROS_ROVER_REVERSING_SOUND_HIGH 500
 #define UROS_ROVER_REVERSING_SOUND_LOW 500
 
+// NEO PIXEL Settings
+#define UROS_NEO_PIXEL_COUNT 8
+
 // GLOBAL VARIABLES
 extern int leftMotorReceivedControl[3];
 extern int rightMotorReceivedControl[3];
