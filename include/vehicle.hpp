@@ -46,6 +46,10 @@ class Vehicle {
   bool _reverseLightOn = false;
   float _frontProximity = 0.0f;
   unsigned long _previousProximityReadTime = 0;
+  unsigned long _previousHootingTime = 0;
+
+
+  
 
   // Speed variables
   short _leftSpeed = 0;

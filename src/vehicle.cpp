@@ -2,13 +2,10 @@
 
 Vehicle::Vehicle(int enaPin, int in1Pin, int in2Pin, int enbPin, int in3Pin,
                  int in4Pin, int hornPin)
-    : _hornPin(hornPin),
-      _enAPin(enaPin),
-      _in1Pin(in1Pin),
-      _in2Pin(in2Pin),
-      _enBPin(enbPin),
-      _in3Pin(in3Pin),
-      _in4Pin(in4Pin) {
+    : _hornPin(hornPin), _enAPin(enaPin), _in1Pin(in1Pin), _in2Pin(in2Pin),
+      _enBPin(enbPin), _in3Pin(in3Pin), _in4Pin(in4Pin) {
+  pinMode(_hornPin, OUTPUT);
+
   pinMode(_enAPin, OUTPUT);
   pinMode(_in1Pin, OUTPUT);
   pinMode(_in2Pin, OUTPUT);
@@ -44,16 +41,14 @@ void Vehicle::drive(int leftSpeed, int rightSpeed) {
     _leftSpeed = _rightSpeed;
     _rightSpeed = 0;
 
-    if (_leftSpeed < 0 && leftMotorReceivedControl[1] >= 0) {
+    if (_leftSpeed < 0 && leftMotorReceivedControl[1] >= 0)
       _leftSpeed = -_leftSpeed;
-    }
   } else if (_rightSpeed == 0 && _leftSpeed != 0) {
     _rightSpeed = _leftSpeed;
     _leftSpeed = 0;
 
-    if (_rightSpeed < 0 && rightMotorReceivedControl[1] >= 0) {
+    if (_rightSpeed < 0 && rightMotorReceivedControl[1] >= 0)
       _rightSpeed = -_rightSpeed;
-    }
   }
 
   //   Serial.printf(
@@ -111,20 +106,22 @@ void Vehicle::stop() {
 }
 
 void Vehicle::hoot(bool hoot) {
-  if (_isHooting == hoot) {
+  if (millis() - _previousHootingTime > UROS_HOOTING_DURATION_TIMEOUT_MS)
+    _previousHootingTime = millis();
+  else
     return;
-  }
+
+  if (_isHooting == hoot)
+    return;
 
   _isHooting = hoot;
 
   if (!_isHooting) {
     _isHornHigh = true;
     digitalWrite(_hornPin, HIGH);
-  } else {
-    if (!_isReversing) {
-      _isHornHigh = false;
-      digitalWrite(_hornPin, LOW);
-    }
+  } else if (!_isReversing) {
+    _isHornHigh = false;
+    digitalWrite(_hornPin, LOW);
   }
 }
 
@@ -168,7 +165,8 @@ VehicleSensors::VehicleSensors(uint8_t mpu9250Address) {
 
   if (!_mpu9250->init()) {
     Serial.println("MPU9250 initialization failed!");
-    while (true);
+    while (true)
+      ;
   } else {
     Serial.println("MPU9250 initialized successfully.");
   }
