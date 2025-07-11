@@ -63,6 +63,8 @@ class Vehicle {
   short _leftSpeed = 0;
   short _rightSpeed = 0;
 
+  bool _animateIn = false;
+
   // Class objects
   NewPing* _frontProximitySensor;
   Adafruit_NeoPixel* _indicatorStrip;

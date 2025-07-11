@@ -2,13 +2,8 @@
 
 Vehicle::Vehicle(int enaPin, int in1Pin, int in2Pin, int enbPin, int in3Pin,
                  int in4Pin, int hornPin)
-    : _hornPin(hornPin),
-      _enAPin(enaPin),
-      _in1Pin(in1Pin),
-      _in2Pin(in2Pin),
-      _enBPin(enbPin),
-      _in3Pin(in3Pin),
-      _in4Pin(in4Pin) {
+    : _hornPin(hornPin), _enAPin(enaPin), _in1Pin(in1Pin), _in2Pin(in2Pin),
+      _enBPin(enbPin), _in3Pin(in3Pin), _in4Pin(in4Pin) {
   pinMode(_hornPin, OUTPUT);
   pinMode(_headLightPin, OUTPUT);
   pinMode(_tailLightPin, OUTPUT);
@@ -28,29 +23,27 @@ Vehicle::Vehicle(int enaPin, int in1Pin, int in2Pin, int enbPin, int in3Pin,
   _indicatorStrip = new Adafruit_NeoPixel(
       UROS_NEO_PIXEL_COUNT, UROS_NEO_PIXEL_PIN, NEO_GRB + NEO_KHZ800);
   _indicatorStrip->begin();
-  _indicatorStrip->show();  // Turn indicators off
+  _indicatorStrip->show(); // Turn indicators off
 }
 
 void Vehicle::loop() {
-  Serial.printf(
-      "Left: x=%d, y=%d, z=%d\tRight: x=%d, y=%d, z=%d\tControl: x=%d, y=%d, "
-      "z=%d\n",
-      leftMotorReceivedControl[0], leftMotorReceivedControl[1],
-      leftMotorReceivedControl[2], rightMotorReceivedControl[0],
-      rightMotorReceivedControl[1], rightMotorReceivedControl[2],
-      vehicleControlReceived[0], vehicleControlReceived[1],
-      vehicleControlReceived[2]);
+  // Serial.printf(
+  //     "Left: x=%d, y=%d, z=%d\tRight: x=%d, y=%d, z=%d\tControl: x=%d, y=%d,
+  //     " "z=%d\n", leftMotorReceivedControl[0], leftMotorReceivedControl[1],
+  //     leftMotorReceivedControl[2], rightMotorReceivedControl[0],
+  //     rightMotorReceivedControl[1], rightMotorReceivedControl[2],
+  //     vehicleControlReceived[0], vehicleControlReceived[1],
+  //     vehicleControlReceived[2]);
 
   drive(leftMotorReceivedControl[0], rightMotorReceivedControl[0]);
   hoot(vehicleControlReceived[2]);
   setReversing(leftMotorReceivedControl[1] < 0);
   setLightStatus(vehicleControlReceived[0], vehicleControlReceived[1]);
 
-  if (_headLightOn) {
+  if (_headLightOn)
     digitalWrite(_headLightPin, HIGH);
-  } else {
+  else
     digitalWrite(_headLightPin, LOW);
-  }
 
   if (_tailLightOn) {
     if ((leftMotorReceivedControl[0] < -UROS_MOTOR_SPEED_MIN ||
@@ -199,7 +192,7 @@ void Vehicle::checkReverse() {
 void Vehicle::setReversing(bool isReversing) { _isReversing = isReversing; }
 
 void Vehicle::toggleLights(uint8_t lightPin, bool on) {
-  Serial.printf("LED: %d State: %d\n", lightPin, on);
+  // Serial.printf("LED: %d State: %d\n", lightPin, on);
   digitalWrite(lightPin, on ? HIGH : LOW);
 }
 
@@ -210,46 +203,94 @@ void Vehicle::setLightStatus(bool headLightOn, bool tailLightOn) {
 
 void Vehicle::showIndicator(TurningDirection direction) {
   if (direction == TurningDirection::E_UROS_TURNING_LEFT) {
-    if (millis() - _lastIndicatorUpdate > 120) {
+    if (millis() - _lastIndicatorUpdate > UROS_NEO_PIXEL_TIMEOUT_MS) {
       _indicatorStrip->clear();
       // Animate from index 4 down to 0, 2 at a time
       for (int i = 0; i < 2; ++i) {
         int led = 4 - (_indicatorAnimIndex + i);
         if (led >= 0 && led < (int)_indicatorStrip->numPixels()) {
           _indicatorStrip->setPixelColor(
-              led, _indicatorStrip->Color(255, 128, 0));  // Amber
+              led, _indicatorStrip->Color(255, 128, 0)); // Amber
         }
       }
       _indicatorStrip->show();
-      _indicatorAnimIndex = (_indicatorAnimIndex + 1) % 5;  // 0..4
+      _indicatorAnimIndex = (_indicatorAnimIndex + 1) % 5; // 0..4
       _lastIndicatorUpdate = millis();
     }
   } else if (direction == TurningDirection::E_UROS_TURNING_RIGHT) {
-    if (millis() - _lastIndicatorUpdate > 120) {
+    if (millis() - _lastIndicatorUpdate > UROS_NEO_PIXEL_TIMEOUT_MS) {
       _indicatorStrip->clear();
       // Animate from index 3 up to 7, 2 at a time
       for (int i = 0; i < 2; ++i) {
         int led = 3 + _indicatorAnimIndex + i;
         if (led >= 0 && led < (int)_indicatorStrip->numPixels()) {
-          _indicatorStrip->setPixelColor(
-              led, _indicatorStrip->Color(255, 128, 0));
+          _indicatorStrip->setPixelColor(led,
+                                         _indicatorStrip->Color(255, 128, 0));
         }
       }
       _indicatorStrip->show();
-      _indicatorAnimIndex = (_indicatorAnimIndex + 1) % 5;  // 0..4 (3+4=7)
+      _indicatorAnimIndex = (_indicatorAnimIndex + 1) % 5; // 0..4 (3+4=7)
       _lastIndicatorUpdate = millis();
     }
   } else {
-    // Not turning: play random colors on all LEDs
-    for (uint16_t i = 0; i < _indicatorStrip->numPixels(); ++i) {
-      uint8_t r = random(0, 256);
-      uint8_t g = random(0, 256);
-      uint8_t b = random(0, 256);
-      _indicatorStrip->setPixelColor(i, _indicatorStrip->Color(r, g, b));
+    // LED off from the center
+    if (!_animateIn) {
+      if (millis() - _lastIndicatorUpdate > UROS_NEO_PIXEL_TIMEOUT_MS * 2) {
+        if (_indicatorAnimIndex == 4) {
+          _indicatorAnimIndex = (_indicatorAnimIndex + 1) % 5;
+          return;
+        }
+
+        // Clear the strip at the beginning of each update
+        _indicatorStrip->clear();
+        _indicatorStrip->show();
+
+        if (_indicatorAnimIndex < 4) {
+          for (int i = 0; i <= 3 - _indicatorAnimIndex; ++i) {
+            _indicatorStrip->setPixelColor(i,
+                                           _indicatorStrip->Color(0, 0, 255));
+          }
+          for (int i = 7; i >= 4 + _indicatorAnimIndex; --i) {
+            _indicatorStrip->setPixelColor(i,
+                                           _indicatorStrip->Color(0, 0, 255));
+          }
+        }
+
+        _indicatorAnimIndex = (_indicatorAnimIndex + 1) % 5;
+
+        _indicatorStrip->show();
+        _lastIndicatorUpdate = millis();
+        _animateIn = (_indicatorAnimIndex == 4);
+      }
+
+    } else if (_animateIn) {
+      if (_indicatorAnimIndex == 4) {
+        _indicatorAnimIndex = (_indicatorAnimIndex + 1) % 5;
+
+        _indicatorStrip->clear();
+        _indicatorStrip->show();
+        return;
+      }
+
+      // LED on from ends
+      if (millis() - _lastIndicatorUpdate > UROS_NEO_PIXEL_TIMEOUT_MS * 2) {
+        _indicatorStrip->clear();
+        _indicatorStrip->show();
+      }
+
+      if (_indicatorAnimIndex < 4) {
+        for (int i = 0; i <= _indicatorAnimIndex; ++i)
+          _indicatorStrip->setPixelColor(i, _indicatorStrip->Color(0, 0, 255));
+
+        for (int i = 7; i >= 7 - _indicatorAnimIndex; --i)
+          _indicatorStrip->setPixelColor(i, _indicatorStrip->Color(0, 0, 255));
+      }
+
+      _indicatorAnimIndex = (_indicatorAnimIndex + 1) % 5;
+      _indicatorStrip->show();
+      _lastIndicatorUpdate = millis();
+      _animateIn = (_indicatorAnimIndex == 4) ? false : true;
     }
-    _indicatorStrip->show();
-    _indicatorAnimIndex = 0;
-    _lastIndicatorUpdate = millis();
   }
 }
 
@@ -287,7 +328,7 @@ VehicleSensors::VehicleSensors(uint8_t mpu9250Address) {
   _mpu9250->setGyrRange(MPU9250_GYRO_RANGE_250);
   _mpu9250->enableAccDLPF(true);
   _mpu9250->setAccDLPF(MPU9250_DLPF_6);
-#endif  // UROS_ROVER_IMU_PRESENT
+#endif // UROS_ROVER_IMU_PRESENT
 
   // ========================= Proximity Sensors =========================
   _frontProximity = new NewPing(UROS_FRONT_PROXIMITY_TRIGGER_PIN,
@@ -313,7 +354,7 @@ void VehicleSensors::loop() {
   vehicle_gyro_data.z = gyr.z;
 
   vehicle_orientation_data.x = resultantG;
-#endif  // UROS_ROVER_IMU_PRESENT
+#endif // UROS_ROVER_IMU_PRESENT
 
   vehicleProximity.x = _frontProximity->ping_cm();
 }

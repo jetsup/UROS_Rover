@@ -62,6 +62,7 @@
 
 // NEO PIXEL Settings
 #define UROS_NEO_PIXEL_COUNT 8
+#define UROS_NEO_PIXEL_TIMEOUT_MS 120
 
 // GLOBAL VARIABLES
 extern int leftMotorReceivedControl[3];

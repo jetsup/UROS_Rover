@@ -5,7 +5,8 @@ void setup() {
 
   if (!Wire.begin(UROS_I2C_SDA_PIN, UROS_I2C_SCL_PIN)) {
     Serial.println("Could not initialize the I2C bus!");
-    while (true);
+    while (true)
+      ;
   }
 
   Serial.println("Starting micro-ROS on WiFi...");
@@ -19,7 +20,7 @@ void setup() {
     delay(500);
     Serial.print(".");
     digitalWrite(UROS_LED_PIN,
-                 !digitalRead(UROS_LED_PIN));  // Blink LED while connecting
+                 !digitalRead(UROS_LED_PIN)); // Blink LED while connecting
   }
 
   Serial.println("");
