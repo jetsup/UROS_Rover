@@ -12,6 +12,8 @@
 
 #include "credentials.h"
 
+#define UROS_ROVER_IMU_PRESENT false
+
 // Pin definitions
 #define UROS_LED_PIN 2
 
@@ -26,6 +28,7 @@
 #define UROS_HEADLIGHT_PIN 4
 #define UROS_TAIL_LIGHT_PIN 16
 #define UROS_REVERSE_LIGHT_PIN 17
+#define UROS_NEO_PIXEL_PIN 19
 #define UROS_FRONT_PROXIMITY_TRIGGER_PIN 33
 #define UROS_FRONT_PROXIMITY_ECHO_PIN 32
 #define UROS_LDR_PIN 23
@@ -52,6 +55,13 @@
 
 // Proximity Sensor Settings
 #define UROS_PROXIMITY_MAX_DISTANCE_CM 400
+
+// Reverse Sound Pattern
+#define UROS_ROVER_REVERSING_SOUND_HIGH 500
+#define UROS_ROVER_REVERSING_SOUND_LOW 500
+
+// NEO PIXEL Settings
+#define UROS_NEO_PIXEL_COUNT 8
 
 // GLOBAL VARIABLES
 extern int leftMotorReceivedControl[3];

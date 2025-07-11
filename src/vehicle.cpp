@@ -2,9 +2,17 @@
 
 Vehicle::Vehicle(int enaPin, int in1Pin, int in2Pin, int enbPin, int in3Pin,
                  int in4Pin, int hornPin)
-    : _hornPin(hornPin), _enAPin(enaPin), _in1Pin(in1Pin), _in2Pin(in2Pin),
-      _enBPin(enbPin), _in3Pin(in3Pin), _in4Pin(in4Pin) {
+    : _hornPin(hornPin),
+      _enAPin(enaPin),
+      _in1Pin(in1Pin),
+      _in2Pin(in2Pin),
+      _enBPin(enbPin),
+      _in3Pin(in3Pin),
+      _in4Pin(in4Pin) {
   pinMode(_hornPin, OUTPUT);
+  pinMode(_headLightPin, OUTPUT);
+  pinMode(_tailLightPin, OUTPUT);
+  pinMode(_reverseLightPin, OUTPUT);
 
   pinMode(_enAPin, OUTPUT);
   pinMode(_in1Pin, OUTPUT);
@@ -16,6 +24,11 @@ Vehicle::Vehicle(int enaPin, int in1Pin, int in2Pin, int enbPin, int in3Pin,
   _frontProximitySensor =
       new NewPing(_frontProximityTriggerPin, _frontProximityEchoPin,
                   UROS_FRONT_PROXIMITY_MAX_DISTANCE_CM);
+
+  _indicatorStrip = new Adafruit_NeoPixel(
+      UROS_NEO_PIXEL_COUNT, UROS_NEO_PIXEL_PIN, NEO_GRB + NEO_KHZ800);
+  _indicatorStrip->begin();
+  _indicatorStrip->show();  // Turn indicators off
 }
 
 void Vehicle::loop() {
@@ -30,6 +43,44 @@ void Vehicle::loop() {
 
   drive(leftMotorReceivedControl[0], rightMotorReceivedControl[0]);
   hoot(vehicleControlReceived[2]);
+  setReversing(leftMotorReceivedControl[1] < 0);
+  setLightStatus(vehicleControlReceived[0], vehicleControlReceived[1]);
+
+  if (_headLightOn) {
+    digitalWrite(_headLightPin, HIGH);
+  } else {
+    digitalWrite(_headLightPin, LOW);
+  }
+
+  if (_tailLightOn) {
+    if ((leftMotorReceivedControl[0] < -UROS_MOTOR_SPEED_MIN ||
+         leftMotorReceivedControl[0] > UROS_MOTOR_SPEED_MIN ||
+         rightMotorReceivedControl[0] < -UROS_MOTOR_SPEED_MIN ||
+         rightMotorReceivedControl[0] > UROS_MOTOR_SPEED_MIN) &&
+        (leftMotorReceivedControl[1] != 0 ||
+         rightMotorReceivedControl[1] != 0)) {
+      analogWrite(_tailLightPin, 50);
+    } else {
+      analogWrite(_tailLightPin, 255);
+    }
+  } else {
+    analogWrite(_tailLightPin, 0);
+  }
+
+  TurningDirection direction = TurningDirection::E_UROS_TURNING_NONE;
+  if (_leftSpeed > (int)UROS_MOTOR_SPEED_MIN &&
+      _rightSpeed < -((int)UROS_MOTOR_SPEED_MIN)) {
+    direction = TurningDirection::E_UROS_TURNING_LEFT;
+  } else if (_rightSpeed > (int)UROS_MOTOR_SPEED_MIN &&
+             _leftSpeed < -((int)UROS_MOTOR_SPEED_MIN)) {
+    direction = TurningDirection::E_UROS_TURNING_RIGHT;
+  } else if (_leftSpeed > _rightSpeed + (int)UROS_MOTOR_SPEED_MIN) {
+    direction = TurningDirection::E_UROS_TURNING_LEFT;
+  } else if (_rightSpeed > _leftSpeed + (int)UROS_MOTOR_SPEED_MIN) {
+    direction = TurningDirection::E_UROS_TURNING_RIGHT;
+  }
+
+  showIndicator(direction);
 }
 
 void Vehicle::drive(int leftSpeed, int rightSpeed) {
@@ -102,21 +153,14 @@ void Vehicle::stop() {
   analogWrite(_enAPin, 0);
   analogWrite(_enBPin, 0);
 
-  digitalWrite(_tailLightPin, _tailLightOn ? HIGH : LOW);
+  analogWrite(_tailLightPin, 255);
+  _tailLightOn = true;
 }
 
 void Vehicle::hoot(bool hoot) {
-  if (millis() - _previousHootingTime > UROS_HOOTING_DURATION_TIMEOUT_MS)
-    _previousHootingTime = millis();
-  else
-    return;
-
-  if (_isHooting == hoot)
-    return;
-
   _isHooting = hoot;
 
-  if (!_isHooting) {
+  if (_isHooting && !_isReversing) {
     _isHornHigh = true;
     digitalWrite(_hornPin, HIGH);
   } else if (!_isReversing) {
@@ -129,16 +173,22 @@ void Vehicle::checkReverse() {
   if (_isReversing) {
     _reverseLightOn = true;
 
-    if (!_isHornHigh && millis() - _reverseStartTime > 500) {
+    if (!_isHornHigh &&
+        millis() - _reverseStartTime > UROS_ROVER_REVERSING_SOUND_HIGH) {
       _isHornHigh = true;
       digitalWrite(_hornPin, HIGH);
-    } else if (_isHornHigh && millis() - _reverseStartTime > 300 &&
-               !_isHooting) {
+      _reverseStartTime = millis();
+    } else if (_isHornHigh &&
+               millis() - _reverseStartTime > UROS_ROVER_REVERSING_SOUND_LOW) {
+      _isHornHigh = false;
+      digitalWrite(_hornPin, LOW);
+      _reverseStartTime = millis();
+    }
+  } else {
+    if (!_isHooting) {
       _isHornHigh = false;
       digitalWrite(_hornPin, LOW);
     }
-  } else {
-    digitalWrite(_hornPin, LOW);
 
     _reverseLightOn = false;
   }
@@ -146,8 +196,61 @@ void Vehicle::checkReverse() {
   toggleLights(_reverseLightPin, _reverseLightOn ? HIGH : LOW);
 }
 
+void Vehicle::setReversing(bool isReversing) { _isReversing = isReversing; }
+
 void Vehicle::toggleLights(uint8_t lightPin, bool on) {
+  Serial.printf("LED: %d State: %d\n", lightPin, on);
   digitalWrite(lightPin, on ? HIGH : LOW);
+}
+
+void Vehicle::setLightStatus(bool headLightOn, bool tailLightOn) {
+  _headLightOn = headLightOn;
+  _tailLightOn = tailLightOn;
+}
+
+void Vehicle::showIndicator(TurningDirection direction) {
+  if (direction == TurningDirection::E_UROS_TURNING_LEFT) {
+    if (millis() - _lastIndicatorUpdate > 120) {
+      _indicatorStrip->clear();
+      // Animate from index 4 down to 0, 2 at a time
+      for (int i = 0; i < 2; ++i) {
+        int led = 4 - (_indicatorAnimIndex + i);
+        if (led >= 0 && led < (int)_indicatorStrip->numPixels()) {
+          _indicatorStrip->setPixelColor(
+              led, _indicatorStrip->Color(255, 128, 0));  // Amber
+        }
+      }
+      _indicatorStrip->show();
+      _indicatorAnimIndex = (_indicatorAnimIndex + 1) % 5;  // 0..4
+      _lastIndicatorUpdate = millis();
+    }
+  } else if (direction == TurningDirection::E_UROS_TURNING_RIGHT) {
+    if (millis() - _lastIndicatorUpdate > 120) {
+      _indicatorStrip->clear();
+      // Animate from index 3 up to 7, 2 at a time
+      for (int i = 0; i < 2; ++i) {
+        int led = 3 + _indicatorAnimIndex + i;
+        if (led >= 0 && led < (int)_indicatorStrip->numPixels()) {
+          _indicatorStrip->setPixelColor(
+              led, _indicatorStrip->Color(255, 128, 0));
+        }
+      }
+      _indicatorStrip->show();
+      _indicatorAnimIndex = (_indicatorAnimIndex + 1) % 5;  // 0..4 (3+4=7)
+      _lastIndicatorUpdate = millis();
+    }
+  } else {
+    // Not turning: play random colors on all LEDs
+    for (uint16_t i = 0; i < _indicatorStrip->numPixels(); ++i) {
+      uint8_t r = random(0, 256);
+      uint8_t g = random(0, 256);
+      uint8_t b = random(0, 256);
+      _indicatorStrip->setPixelColor(i, _indicatorStrip->Color(r, g, b));
+    }
+    _indicatorStrip->show();
+    _indicatorAnimIndex = 0;
+    _lastIndicatorUpdate = millis();
+  }
 }
 
 void Vehicle::measureProximity() {
@@ -160,7 +263,8 @@ void Vehicle::measureProximity() {
 
 // ========================= Vehicle Sensors =========================
 VehicleSensors::VehicleSensors(uint8_t mpu9250Address) {
-  // ******************** MPU9250 ********************
+// ******************** MPU9250 ********************
+#if UROS_ROVER_IMU_PRESENT
   _mpu9250 = new MPU9250_WE(mpu9250Address);
 
   if (!_mpu9250->init()) {
@@ -183,6 +287,7 @@ VehicleSensors::VehicleSensors(uint8_t mpu9250Address) {
   _mpu9250->setGyrRange(MPU9250_GYRO_RANGE_250);
   _mpu9250->enableAccDLPF(true);
   _mpu9250->setAccDLPF(MPU9250_DLPF_6);
+#endif  // UROS_ROVER_IMU_PRESENT
 
   // ========================= Proximity Sensors =========================
   _frontProximity = new NewPing(UROS_FRONT_PROXIMITY_TRIGGER_PIN,
@@ -193,6 +298,7 @@ VehicleSensors::VehicleSensors(uint8_t mpu9250Address) {
 VehicleSensors::~VehicleSensors() { delete _mpu9250; }
 
 void VehicleSensors::loop() {
+#if UROS_ROVER_IMU_PRESENT
   xyzFloat gValue = _mpu9250->getGValues();
   xyzFloat gyr = _mpu9250->getGyrValues();
   float temp = _mpu9250->getTemperature();
@@ -207,6 +313,7 @@ void VehicleSensors::loop() {
   vehicle_gyro_data.z = gyr.z;
 
   vehicle_orientation_data.x = resultantG;
+#endif  // UROS_ROVER_IMU_PRESENT
 
   vehicleProximity.x = _frontProximity->ping_cm();
 }
